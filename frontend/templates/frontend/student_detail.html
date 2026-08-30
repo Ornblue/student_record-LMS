@@ -1,0 +1,16 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% block title %}Student Transcript{% endblock %}
+{% block content %}
+
+<a href="{% url 'students-page' %}" class="btn btn-sm btn-outline-secondary mb-3"><i class="bi bi-arrow-left"></i> Back to Students</a>
+
+<div id="detailContent">
+  <div class="spinner-overlay"><div class="spinner-border text-primary"></div></div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>const STUDENT_PK = {{ student_pk }};</script>
+<script src="{% static 'frontend/js/student_detail.js' %}"></script>
+{% endblock %}

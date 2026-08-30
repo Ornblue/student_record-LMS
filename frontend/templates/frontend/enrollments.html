@@ -1,0 +1,177 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% block title %}Enrollments{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-0">Enrollments</h2>
+    <p class="text-secondary mb-0">Track enrollments, grades, and course capacity automatically.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary" id="exportBtn"><i class="bi bi-download"></i> Export CSV</button>
+    <button class="btn btn-outline-primary" id="bulkEnrollBtn"><i class="bi bi-people"></i> Bulk Enroll</button>
+    <button class="btn btn-primary" id="addEnrollmentBtn"><i class="bi bi-plus-lg"></i> New Enrollment</button>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Search</label>
+      <input type="text" id="searchInput" class="form-control" placeholder="Student, course, semester…">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Status</label>
+      <select id="statusFilter" class="form-select">
+        <option value="">All</option>
+        <option value="enrolled">Enrolled</option>
+        <option value="waitlisted">Waitlisted</option>
+        <option value="completed">Completed</option>
+        <option value="dropped">Dropped</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small mb-1">Semester</label>
+      <input type="text" id="semesterFilter" class="form-control" placeholder="e.g. 2026-Fall">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small mb-1">Page size</label>
+      <select id="pageSizeSelect" class="form-select">
+        <option value="10" selected>10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+      </select>
+    </div>
+    <div class="col-md-1">
+      <button class="btn btn-outline-secondary w-100" id="clearFiltersBtn" title="Clear filters"><i class="bi bi-x-lg"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="sortable" data-sort="student__last_name">Student <i class="bi bi-arrow-down-up sort-icon"></i></th>
+          <th>Course</th>
+          <th class="sortable" data-sort="semester">Semester <i class="bi bi-arrow-down-up sort-icon"></i></th>
+          <th class="sortable" data-sort="status">Status <i class="bi bi-arrow-down-up sort-icon"></i></th>
+          <th>Grade</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="enrollmentsTbody">
+        <tr><td colspan="6"><div class="spinner-overlay"><div class="spinner-border text-primary"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+  <div class="small text-secondary" id="resultsSummary"></div>
+  <nav><ul class="pagination mb-0" id="pagination"></ul></nav>
+</div>
+
+<!-- New Enrollment Modal -->
+<div class="modal fade" id="enrollmentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="enrollmentForm">
+        <div class="modal-header">
+          <h5 class="modal-title">New Enrollment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="enrollFormErrors" class="alert alert-danger d-none"></div>
+          <div class="mb-3">
+            <label class="form-label">Student *</label>
+            <select required class="form-select" id="e_student"><option value="">Loading…</option></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Course *</label>
+            <select required class="form-select" id="e_course"><option value="">Loading…</option></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Semester *</label>
+            <input required class="form-control" id="e_semester" value="2026-Fall">
+          </div>
+          <div class="form-text">If the course is at capacity, the student will be automatically waitlisted.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="enrollFormSubmit">Enroll</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Enroll Modal -->
+<div class="modal fade" id="bulkModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="bulkForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Bulk Enroll Students</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="bulkFormErrors" class="alert alert-danger d-none"></div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Course *</label>
+              <select required class="form-select" id="b_course"><option value="">Loading…</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Semester *</label>
+              <input required class="form-control" id="b_semester" value="2026-Fall">
+            </div>
+          </div>
+          <label class="form-label">Students * <span class="text-secondary small">(Ctrl/Cmd+click to select multiple)</span></label>
+          <select required multiple class="form-select" id="b_students" size="8"><option value="">Loading…</option></select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="bulkFormSubmit">Enroll Selected</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Set Grade Modal -->
+<div class="modal fade" id="gradeModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form id="gradeForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Assign Grade</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="g_enrollment_id">
+          <p class="small text-secondary mb-2" id="g_context"></p>
+          <label class="form-label">Grade *</label>
+          <select required class="form-select" id="g_grade">
+            <option value="">Select…</option>
+            <option>A+</option><option>A</option><option>A-</option>
+            <option>B+</option><option>B</option><option>B-</option>
+            <option>C+</option><option>C</option><option>C-</option>
+            <option>D</option><option>F</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Grade</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'frontend/js/enrollments.js' %}"></script>
+{% endblock %}

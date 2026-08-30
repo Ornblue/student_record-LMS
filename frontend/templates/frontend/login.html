@@ -1,0 +1,73 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Student Learning Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{min-height:100vh;background:linear-gradient(135deg,#f5f7fb,#e9efff)}
+    .auth-card{max-width:520px;margin:6vh auto;border:0;border-radius:22px}
+    .brand{font-weight:800;letter-spacing:-.5px}.role-btn.active{box-shadow:0 0 0 2px rgba(13,110,253,.2)}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="card auth-card shadow-lg">
+    <div class="card-body p-4 p-md-5">
+      <div class="text-center mb-4">
+        <h2 class="brand">Student Learning Portal</h2>
+        <p class="text-secondary mb-0">Secure course, attendance and assessment platform</p>
+      </div>
+
+      <div id="error" class="alert alert-danger d-none"></div>
+      <div id="success" class="alert alert-success d-none"></div>
+
+      <div class="btn-group w-100 mb-4" role="group">
+        <button id="signInTab" class="btn btn-primary">Sign in</button>
+        <button id="registerTab" class="btn btn-outline-primary">Register</button>
+      </div>
+
+      <div id="loginPanel">
+        <div class="mb-3"><label class="form-label">Username</label><input id="loginUsername" class="form-control" autocomplete="username"></div>
+        <div class="mb-3"><label class="form-label">Password</label><input id="loginPassword" type="password" class="form-control" autocomplete="current-password"></div>
+        <button id="loginBtn" class="btn btn-primary w-100">Sign in</button>
+      </div>
+
+      <div id="registerPanel" class="hidden">
+        <label class="form-label">Register as</label>
+        <div class="d-flex gap-2 mb-3">
+          <button type="button" class="btn btn-outline-primary role-btn active flex-fill" data-role="student">Student</button>
+          <button type="button" class="btn btn-outline-primary role-btn flex-fill" data-role="professor">Professor</button>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">First name</label><input id="firstName" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Last name</label><input id="lastName" class="form-control"></div>
+          <div class="col-12"><label class="form-label">Username</label><input id="regUsername" class="form-control" autocomplete="username"></div>
+          <div class="col-12"><label class="form-label">Email</label><input id="regEmail" type="email" class="form-control" autocomplete="email"></div>
+          <div class="col-12" id="departmentWrap"><label class="form-label">Department</label><input id="department" class="form-control" placeholder="e.g. Computer Science"></div>
+          <div class="col-md-6"><label class="form-label">Password</label><input id="regPassword" type="password" class="form-control" autocomplete="new-password"></div>
+          <div class="col-md-6"><label class="form-label">Confirm password</label><input id="regConfirm" type="password" class="form-control" autocomplete="new-password"></div>
+        </div>
+        <div class="small text-secondary mt-3">Professor accounts can sign in immediately, but a professor must be assigned to a course by an administrator before managing that course.</div>
+        <button id="registerBtn" class="btn btn-primary w-100 mt-3">Create account</button>
+      </div>
+      <div class="text-center mt-4 small text-secondary">Administrators use the secure Django Admin login.</div><a href="/admin/login/" class="btn btn-sm btn-outline-secondary w-100 mt-2">Administrator sign in</a>
+    </div>
+  </div>
+</div>
+<script src="{% static 'frontend/js/api.js' %}"></script>
+<script>
+const $=id=>document.getElementById(id);
+let selectedRole='student';
+function message(el,text){el.textContent=text;el.classList.remove('d-none')}
+function clearMessages(){ $('error').classList.add('d-none');$('success').classList.add('d-none'); }
+function saveAndGo(data){ if(!data || !data.access || !data.refresh || !data.user){ throw new Error('Authentication response was incomplete. Please try again.'); } localStorage.setItem('access',data.access);localStorage.setItem('access_token',data.access);localStorage.setItem('refresh',data.refresh);localStorage.setItem('user',JSON.stringify(data.user)); window.location.assign('/portal/'); }
+$('signInTab').onclick=()=>{clearMessages();$('loginPanel').classList.remove('hidden');$('registerPanel').classList.add('hidden');$('signInTab').className='btn btn-primary';$('registerTab').className='btn btn-outline-primary'};
+$('registerTab').onclick=()=>{clearMessages();$('loginPanel').classList.add('hidden');$('registerPanel').classList.remove('hidden');$('registerTab').className='btn btn-primary';$('signInTab').className='btn btn-outline-primary'};
+document.querySelectorAll('.role-btn').forEach(b=>b.onclick=()=>{selectedRole=b.dataset.role;document.querySelectorAll('.role-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('departmentWrap').classList.toggle('hidden',selectedRole!=='student')});
+$('loginBtn').onclick=async()=>{clearMessages();const username=$('loginUsername').value.trim();const password=$('loginPassword').value;if(!username||!password){message($('error'),'Enter your username and password.');return}localStorage.removeItem('access');localStorage.removeItem('access_token');localStorage.removeItem('jwt_access');localStorage.removeItem('refresh');localStorage.removeItem('user');try{const r=await apiRequest('/auth/login/',{method:'POST',body:{username,password}});saveAndGo(r)}catch(e){message($('error'),e.message)}};
+$('registerBtn').onclick=async()=>{clearMessages();if($('regPassword').value!==$('regConfirm').value){message($('error'),'Passwords do not match.');return}try{const r=await apiRequest('/auth/register/',{method:'POST',body:{username:$('regUsername').value,email:$('regEmail').value,password:$('regPassword').value,first_name:$('firstName').value,last_name:$('lastName').value,department:$('department').value,role:selectedRole}});saveAndGo(r)}catch(e){message($('error'),e.message)}};
+</script>
+</body></html>
