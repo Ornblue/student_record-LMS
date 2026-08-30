@@ -1,7 +1,6 @@
 # Student Record Management + LMS Portal
 
-Student Record & Learning Management System (LMS) is a Django-based web application designed to simplify the management of student records and academic activities through a centralized platform. It provides features for managing student information, assignments, academic records, authentication, role-based access, and learning resources, along with AI-powered smart suggestions. The project combines a Python/Django backend with a responsive frontend to create an organized and user-friendly learning management experience.
-
+Django + Django REST Framework project with JWT authentication, RBAC and a complete student/professor learning portal.
 
 ## Roles
 - **Student**: view enrolled courses, videos, notes, take tests, submit assignments, mark attendance, view grades.
@@ -58,10 +57,3 @@ The professor can then publish/override the final percentage and letter grade.
 5. Take tests.
 6. Mark attendance directly from the portal using the professor's active-class code.
 7. View quiz, assignment, attendance and final overall grades.
-
-
-
-#images/videos
-
-
-
