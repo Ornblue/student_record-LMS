@@ -7,6 +7,10 @@ Django + Django REST Framework project with JWT authentication, RBAC and a compl
 - **Professor**: create and manage their own courses, publish videos/notes, create tests/questions, create assignments, open/close attendance, view submissions, grade tests/assignments, and publish final overall grades.
 - **Admin**: full Django admin access.
 
+- ## 🎥 Project Demonstration
+
+[▶️ Watch the Project Demonstration](demo/demonstration.mp4)
+
 ## Fresh setup (macOS/Linux)
 ```bash
 cd ~/Downloads
